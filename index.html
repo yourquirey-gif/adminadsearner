@@ -3,349 +3,352 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GameRewarder Premium Panel</title>
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <script src="https://sad.adsgram.ai/js/sad.min.js"></script>
+    <title>GameRewarder Premium Admin Panel</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         body {
             font-family: 'Poppins', sans-serif;
-            background-color: #0b0b0e;
-            color: #ffffff;
-            -webkit-tap-highlight-color: transparent;
+            background-color: #0f172a;
+            color: #f8fafc;
         }
-        .premium-card {
-            background: linear-gradient(145deg, #16161f, #121217);
-            border: 1px solid rgba(255, 255, 255, 0.03);
-        }
-        .btn-premium-gold {
-            background: linear-gradient(180deg, #ffc700 0%, #e6ab00 100%);
-            color: #000000;
-            font-weight: 700;
-            box-shadow: 0 4px 15px rgba(255, 199, 0, 0.2);
-            transition: all 0.2s ease;
-        }
-        .btn-premium-gold:active {
-            transform: scale(0.98);
-        }
-        .nav-tab.active {
-            color: #ffc700;
-        }
-        .nav-tab.active i {
-            stroke: #ffc700;
-            filter: drop-shadow(0 0 4px rgba(255, 199, 0, 0.4));
-        }
-        .app-view {
-            display: none;
-        }
-        .app-view.active {
-            display: block;
-            animation: fadeIn 0.3s ease-out forwards;
-        }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(8px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        input, select {
-            background-color: #1a1a24 !important;
-            border: 1px solid rgba(255, 255, 255, 0.08) !important;
-            color: #ffffff !important;
-        }
-        input:focus, select:focus {
-            outline: none;
-            border-color: #ffc700 !important;
-        }
-        .glass-modal {
-            background: rgba(22, 22, 31, 0.75);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.05);
-        }
+        .admin-page { display: none; }
+        .admin-page.active { display: block; animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        .sidebar-link { transition: all 0.2s ease; }
+        .sidebar-link.active { background: linear-gradient(90deg, #f97316 0%, #ea580c 100%); color: #ffffff; box-shadow: 0 4px 12px rgba(234, 88, 12, 0.25); }
+        .premium-card { background: #1e293b; border: 1px solid rgba(255, 255, 255, 0.03); border-radius: 1rem; }
+        .input-field { background-color: #0f172a; border: 1px solid #334155; padding: 0.625rem 0.875rem; border-radius: 0.5rem; color: #f8fafc; width: 100%; transition: all 0.2s; }
+        .input-field:focus { outline: none; border-color: #f97316; box-shadow: 0 0 0 2px rgba(249, 115, 22, 0.15); }
+        .btn-primary { background: linear-gradient(180deg, #f97316 0%, #ea580c 100%); color: white; padding: 0.625rem 1.25rem; border-radius: 0.5rem; font-weight: 600; transition: all 0.2s; }
+        .btn-primary:hover { opacity: 0.95; transform: translateY(-1px); }
+        .btn-primary:active { transform: translateY(0); }
+        #toast-notification { transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #0f172a; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
-<body class="pb-28 max-w-md mx-auto min-h-screen relative flex flex-col justify-between">
+<body class="min-h-screen overflow-x-hidden">
 
-    <div id="auth-overlay" class="fixed inset-0 bg-[#0b0b0e] z-50 flex flex-col items-center justify-center p-6 text-center">
-        <div class="space-y-2 mb-8">
-            <span class="text-3xl font-extrabold tracking-tight text-white">Game<span class="text-[#ffc700]">Rewarder</span></span>
-            <p class="text-xs text-gray-400">Premium Earning Engine Platform</p>
-        </div>
-        <div id="telegram-login-container" class="premium-card p-6 rounded-2xl w-full max-w-xs space-y-4">
-            <p class="text-sm font-medium text-gray-300">Authenticate through Telegram to access your account</p>
-            <div class="flex justify-center py-2">
-                <script async src="https://telegram.org/js/telegram-widget.js?22" data-telegram-login="YourMuskTasksBot" data-size="large" data-onauth="onTelegramAuth" data-request-access="write"></script>
-            </div>
-            <button id="btn-browser-bypass" onclick="triggerFallbackAuth()" class="w-full bg-white/5 border border-white/10 py-2.5 rounded-xl text-xs font-semibold text-gray-300 hidden">
-                Launch Browser Sandbox (Test Environment)
-            </button>
+    <div id="loader" class="fixed inset-0 bg-[#0f172a]/80 backdrop-blur-sm flex items-center justify-center z-50">
+        <div class="flex flex-col items-center gap-3">
+            <div class="animate-spin rounded-full h-12 w-12 border-4 border-slate-700 border-t-orange-500"></div>
+            <p class="text-xs text-slate-400 font-medium tracking-wider">Syncing Secure Core Data Node...</p>
         </div>
     </div>
-
-    <div id="ad-loading-popup" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-6">
-        <div class="glass-modal w-full max-w-xs p-6 rounded-2xl text-center space-y-4">
-            <div class="relative w-16 h-16 mx-auto">
-                <div class="absolute inset-0 rounded-full border-4 border-amber-500/20"></div>
-                <div class="absolute inset-0 rounded-full border-4 border-t-[#ffc700] animate-spin"></div>
+    
+    <div id="auth-section" class="min-h-screen flex items-center justify-center bg-[#090d16] px-4">
+        <div class="premium-card p-8 w-full max-w-md space-y-6 shadow-2xl relative border-t-4 border-t-orange-500">
+            <div class="text-center space-y-1">
+                <h2 class="text-3xl font-extrabold tracking-tight text-white">Game<span class="text-orange-500">Rewarder</span></h2>
+                <p class="text-xs text-slate-400 font-medium uppercase tracking-widest">Master Admin Command Console</p>
             </div>
-            <div class="space-y-1">
-                <h3 class="text-base font-bold text-white tracking-wide">Loading Premium Ad...</h3>
-                <p class="text-xs text-gray-400">Preparing system-allocated verification request node</p>
-            </div>
-        </div>
-    </div>
-
-    <div id="app-loader" class="fixed inset-0 bg-black/80 flex items-center justify-center z-50">
-        <div class="animate-spin rounded-full h-10 w-10 border-2 border-t-amber-500 border-r-transparent border-b-transparent border-l-transparent"></div>
-    </div>
-
-    <div id="announcement-banner" class="hidden bg-gradient-to-r from-amber-500/10 to-amber-600/5 border-b border-amber-500/20 p-2.5 text-center text-xs font-medium text-[#ffc700]">
-        <span id="announcement-text"></span>
-    </div>
-
-    <header class="p-4 flex justify-between items-center bg-[#0b0b0e] sticky top-0 z-40 border-b border-white/[0.02]">
-        <div class="flex items-center gap-2.5">
-            <img id="header-user-avatar" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'><circle cx='50' cy='50' r='50' fill='%231a1a24'/></svg>" class="w-9 h-9 rounded-full object-cover border border-white/10" alt="Avatar">
-            <div class="flex flex-col">
-                <span id="header-user-name" class="text-sm font-bold text-white truncate max-w-[120px]">Loading Profile...</span>
-                <span id="header-user-username" class="text-[10px] text-gray-400 font-medium truncate max-w-[100px]">@username</span>
-            </div>
-        </div>
-        <div class="bg-[#16161f] px-3 py-1.5 rounded-full border border-white/[0.04] flex items-center gap-1.5">
-            <span class="text-[#ffc700] font-bold text-sm">₹</span>
-            <span id="header-balance" class="font-bold text-sm text-white">0</span>
-        </div>
-    </header>
-
-    <main class="px-4 flex-grow">
-
-        <section id="view-home" class="app-view active space-y-5">
-            <div class="premium-card rounded-2xl p-5 relative overflow-hidden mt-2">
-                <p class="text-xs text-gray-400 font-medium uppercase tracking-wide">Welcome back,</p>
-                <h3 id="dashboard-welcome-name" class="text-lg font-bold text-white mt-0.5">Premium Partner</h3>
-                
-                <div class="mt-6">
-                    <p class="text-[11px] text-gray-500 uppercase tracking-wider font-semibold">Current Balance</p>
-                    <div class="flex items-baseline gap-1 mt-1">
-                        <span class="text-3xl font-extrabold text-[#ffc700]">₹</span>
-                        <span id="dashboard-main-balance" class="text-4xl font-black text-white tracking-tight">0</span>
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-3 gap-2 mt-6 pt-4 border-t border-white/[0.04]">
-                    <div>
-                        <span id="stat-total-earned" class="block text-base font-bold text-emerald-400">₹0</span>
-                        <span class="text-[10px] text-gray-400 block mt-0.5">Total Earned</span>
-                    </div>
-                    <div>
-                        <span id="stat-ads-watched" class="block text-base font-bold text-blue-400">0</span>
-                        <span class="text-[10px] text-gray-400 block mt-0.5">Ads Watched</span>
-                    </div>
-                    <div>
-                        <span id="stat-referrals" class="block text-base font-bold text-purple-400">0</span>
-                        <span class="text-[10px] text-gray-400 block mt-0.5">Referrals</span>
-                    </div>
-                </div>
-            </div>
-
-            <div class="space-y-4">
-                <button id="btn-trigger-ad-watch" class="w-full btn-premium-gold py-4 rounded-xl flex items-center justify-center gap-2.5 text-base shadow-lg">
-                    <i data-lucide="play-circle" class="w-5 h-5"></i>
-                    Watch Ad & Earn Reward
-                </button>
-            </div>
-        </section>
-
-        <section id="view-tasks" class="app-view space-y-4">
-            <div class="premium-card rounded-2xl p-5 mt-2 space-y-1">
-                <h3 class="text-base font-bold text-white flex items-center gap-2">
-                    <i data-lucide="check-square" class="w-5 h-5 text-[#ffc700]"></i>
-                    Premium System Tasks
-                </h3>
-                <p class="text-xs text-gray-400">Complete standard system channel verifications below to release coin drops.</p>
-            </div>
-
-            <div id="tasks-system-list" class="space-y-3">
-                <p class="text-xs text-gray-500 text-center py-6">Checking active system configuration updates...</p>
-            </div>
-        </section>
-
-        <section id="view-refer" class="app-view space-y-5">
-            <div class="premium-card rounded-2xl p-6 text-center space-y-4 mt-2">
-                <div class="w-16 h-16 bg-amber-500/10 rounded-full flex items-center justify-center mx-auto border border-amber-500/20">
-                    <i data-lucide="gift" class="w-8 h-8 text-[#ffc700]"></i>
-                </div>
-                <div class="space-y-1">
-                    <h2 class="text-xl font-bold text-white">Invite Friends</h2>
-                    <p id="referral-bonus-info" class="text-sm text-gray-400 px-4">Share your invite link below to claim dynamic coin balance expansions.</p>
-                </div>
-            </div>
-
-            <div class="premium-card rounded-xl p-4 space-y-3">
-                <label class="text-xs font-semibold text-gray-400 uppercase tracking-wider block">Your Invitation Premium Deep Link</label>
-                <div class="flex gap-2">
-                    <div id="referral-link-display" class="flex-1 bg-[#1a1a24] border border-white/[0.06] rounded-xl flex items-center px-3 font-mono text-xs font-medium text-[#ffc700] truncate tracking-tight select-all">Loading link...</div>
-                    <button onclick="copyReferralCode()" class="bg-[#1a1a24] text-white px-4 rounded-xl border border-white/[0.08] flex items-center justify-center transition">
-                        <i data-lucide="copy" class="w-4 h-4"></i>
-                    </button>
-                </div>
-                <button onclick="shareReferralCode()" class="w-full btn-premium-gold py-3 rounded-xl flex items-center justify-center gap-2 text-sm mt-2">
-                    <i data-lucide="share-2" class="w-4 h-4"></i>
-                    Share Invite Link
-                </button>
-            </div>
-
-            <div class="premium-card rounded-xl p-4 space-y-4">
-                <div class="pt-2">
-                    <label class="text-xs font-semibold text-gray-400 uppercase tracking-wider block mb-3">Claim Invitation Code</label>
-                    <div class="flex gap-2">
-                        <input type="text" id="enter-referral-code" placeholder="Enter Friend's UID Code" class="flex-1 px-4 py-3 rounded-xl text-sm font-medium">
-                        <button onclick="handleApplyReferralCode()" class="bg-white text-black font-bold px-5 rounded-xl text-xs hover:bg-gray-200 transition">Apply</button>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <section id="view-withdraw" class="app-view space-y-5">
-            <div class="premium-card rounded-2xl p-5 space-y-4 mt-2">
-                <h3 class="text-base font-bold text-white flex items-center gap-2">
-                    <i data-lucide="wallet" class="w-5 h-5 text-[#ffc700]"></i>
-                    Withdrawal Portal
-                </h3>
-
-                <div class="space-y-3 pt-1">
-                    <div class="flex items-center justify-between p-3 bg-white/[0.01] border border-white/[0.04] rounded-xl">
-                        <div class="flex items-center gap-3">
-                            <i data-lucide="circle-dollar-sign" class="w-4 h-4 text-[#ffc700]"></i>
-                            <div>
-                                <p class="text-xs font-semibold text-white">Minimum Payout Value</p>
-                                <p id="criteria-balance-text" class="text-[10px] text-gray-400">Loading limits...</p>
-                            </div>
-                        </div>
-                        <div id="criteria-balance-icon"><i data-lucide="help-circle" class="w-4 h-4 text-gray-600"></i></div>
-                    </div>
-
-                    <div class="flex items-center justify-between p-3 bg-white/[0.01] border border-white/[0.04] rounded-xl">
-                        <div class="flex items-center gap-3">
-                            <i data-lucide="users-2" class="w-4 h-4 text-purple-400"></i>
-                            <div>
-                                <p class="text-xs font-semibold text-white">Referral Verification Rule</p>
-                                <p id="criteria-referrals-text" class="text-[10px] text-gray-400">Requires minimum 2 successful invitations</p>
-                            </div>
-                        </div>
-                        <div id="criteria-referrals-icon"><i data-lucide="help-circle" class="w-4 h-4 text-gray-600"></i></div>
-                    </div>
-                </div>
-
-                <div class="space-y-3 pt-2">
-                    <div>
-                        <label class="text-xs font-medium text-gray-400 block mb-1.5">Payout System Protocol</label>
-                        <select id="withdraw-method" class="w-full p-3 rounded-xl text-sm font-medium"></select>
-                    </div>
-                    <div>
-                        <label class="text-xs font-medium text-gray-400 block mb-1.5">Address / Credentials Node Destination</label>
-                        <div id="payment-details-container"></div>
-                    </div>
-                    <div>
-                        <label class="text-xs font-medium text-gray-400 block mb-1.5">Amount to Payout</label>
-                        <input type="number" id="withdraw-amount" placeholder="Enter payout amount" class="w-full p-3 rounded-xl text-sm font-semibold">
-                    </div>
-
-                    <button id="btn-action-withdraw" onclick="handleWithdrawal()" class="w-full btn-premium-gold py-3.5 rounded-xl text-sm font-bold mt-2 flex items-center justify-center gap-2">
-                        <i data-lucide="arrow-up-right" class="w-4 h-4"></i>
-                        Request Withdrawal Action
-                    </button>
-                </div>
-            </div>
-
-            <div class="space-y-3">
-                <p class="text-xs uppercase tracking-widest text-gray-500 font-bold px-1">Your Payout Request Logs</p>
-                <div id="withdrawal-history-list" class="space-y-2.5">
-                    <p class="text-xs text-gray-500 text-center py-4">No logged withdrawal workflows detected yet.</p>
-                </div>
-            </div>
-        </section>
-
-        <section id="view-profile" class="app-view space-y-4">
-            <div class="premium-card rounded-2xl p-6 text-center space-y-3 mt-2 flex flex-col items-center">
-                <img id="profile-pane-avatar" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'><circle cx='50' cy='50' r='50' fill='%231a1a24'/></svg>" class="w-20 h-20 rounded-full object-cover border-2 border-[#ffc700] shadow-lg" alt="Avatar">
+            <div class="space-y-4 pt-2">
                 <div>
-                    <h3 id="profile-pane-name" class="text-lg font-bold text-white">Partner Name</h3>
-                    <p id="profile-pane-username" class="text-xs text-[#ffc700] font-medium">@username</p>
+                    <label class="text-xs font-semibold text-slate-400 block mb-1.5">Admin Email Credentials</label>
+                    <input id="login-email" type="email" placeholder="admin@gamerewarder.com" class="input-field">
+                </div>
+                <div>
+                    <label class="text-xs font-semibold text-slate-400 block mb-1.5">Secure Passkey Phrase</label>
+                    <input id="login-password" type="password" placeholder="••••••••••••" class="input-field">
+                </div>
+                <button id="login-btn" class="btn-primary w-full py-3 mt-2 text-sm flex items-center justify-center gap-2">
+                    <i data-lucide="shield-check" class="w-4 h-4"></i> Access Core Framework
+                </button>
+                <p id="login-error" class="text-red-400 text-xs font-medium text-center mt-2 min-h-[16px]"></p>
+            </div>
+        </div>
+    </div>
+
+    <div id="panel-section" class="hidden min-h-screen flex">
+        
+        <aside class="w-64 bg-[#111827] flex-shrink-0 flex flex-col justify-between border-r border-slate-800">
+            <div>
+                <div class="p-5 border-b border-slate-800 flex items-center justify-between">
+                    <div class="flex flex-col">
+                        <span class="text-xl font-black text-white tracking-tight">Game<span class="text-orange-500">Rewarder</span></span>
+                        <span class="text-[9px] font-bold tracking-widest text-emerald-400 uppercase">System Active</span>
+                    </div>
+                    <div class="w-2.5 h-2.5 bg-emerald-500 rounded-full animate-pulse"></div>
+                </div>
+                <nav class="p-3 space-y-1">
+                    <button data-page="dashboard" class="sidebar-link active w-full flex items-center py-2.5 px-4 rounded-lg text-sm font-semibold text-slate-400 hover:text-white"><i data-lucide="layout-dashboard" class="w-4 h-4 mr-3"></i>Dashboard</button>
+                    <button data-page="users" class="sidebar-link w-full flex items-center py-2.5 px-4 rounded-lg text-sm font-semibold text-slate-400 hover:text-white"><i data-lucide="users" class="w-4 h-4 mr-3"></i>User Hub</button>
+                    <button data-page="withdrawals" class="sidebar-link w-full flex items-center py-2.5 px-4 rounded-lg text-sm font-semibold text-slate-400 hover:text-white"><i data-lucide="banknote" class="w-4 h-4 mr-3"></i>Withdrawals</button>
+                    <button data-page="tasks" class="sidebar-link w-full flex items-center py-2.5 px-4 rounded-lg text-sm font-semibold text-slate-400 hover:text-white"><i data-lucide="clipboard-list" class="w-4 h-4 mr-3"></i>Task Grid</button>
+                    <button data-page="broadcast" class="sidebar-link w-full flex items-center py-2.5 px-4 rounded-lg text-sm font-semibold text-slate-400 hover:text-white"><i data-lucide="megaphone" class="w-4 h-4 mr-3"></i>Broadcast</button>
+                    <button data-page="settings" class="sidebar-link w-full flex items-center py-2.5 px-4 rounded-lg text-sm font-semibold text-slate-400 hover:text-white"><i data-lucide="sliders" class="w-4 h-4 mr-3"></i>App Matrix Settings</button>
+                    <button data-page="analytics" class="sidebar-link w-full flex items-center py-2.5 px-4 rounded-lg text-sm font-semibold text-slate-400 hover:text-white"><i data-lucide="bar-chart-3" class="w-4 h-4 mr-3"></i>Deep Analytics</button>
+                </nav>
+            </div>
+            <div class="p-4 border-t border-slate-800">
+                <button id="logout-btn" class="w-full bg-slate-800 text-slate-300 hover:bg-red-600/10 hover:text-red-400 py-2 rounded-lg text-xs font-bold transition flex items-center justify-center gap-2">
+                    <i data-lucide="log-out" class="w-3.5 h-3.5"></i> Exit Secure Session
+                </button>
+            </div>
+        </aside>
+
+        <main class="flex-1 p-8 overflow-y-auto max-w-[calc(100vw-16rem)]">
+            
+            <div id="dashboard" class="admin-page active space-y-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h1 class="text-3xl font-extrabold tracking-tight">System Core Dashboard</h1>
+                        <p class="text-xs text-slate-400 mt-0.5">Real-time parameters derived directly from system ledger allocations</p>
+                    </div>
+                </div>
+                <div id="stats-grid" class="grid grid-cols-1 md:grid-cols-4 gap-4">Loading stats matrix...</div>
+            </div>
+
+            <div id="users" class="admin-page space-y-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h1 class="text-3xl font-extrabold tracking-tight">User Lifecycle Hub</h1>
+                        <p class="text-xs text-slate-400 mt-0.5">Manage credentials, restrictions, and real-time ledger increments</p>
+                    </div>
+                </div>
+                <div class="premium-card p-5 space-y-4">
+                    <div class="flex gap-3">
+                        <div class="relative flex-1">
+                            <i data-lucide="search" class="w-4 h-4 text-slate-500 absolute left-3.5 top-3.5"></i>
+                            <input type="text" id="user-search-input" placeholder="Search accounts by Name, UID, or Telegram ID String..." class="input-field pl-10">
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto rounded-lg border border-slate-800" id="users-table-view">
+                        </div>
                 </div>
             </div>
 
-            <div class="premium-card rounded-xl p-4 space-y-3.5 text-xs font-medium">
-                <div class="flex justify-between items-center py-2 border-b border-white/[0.03]">
-                    <span class="text-gray-400">Telegram ID</span>
-                    <span id="profile-stat-tgid" class="text-white font-mono font-bold">N/A</span>
+            <div id="withdrawals" class="admin-page space-y-6">
+                <div>
+                    <h1 class="text-3xl font-extrabold tracking-tight">Payout Queue Processing</h1>
+                    <p class="text-xs text-slate-400 mt-0.5">Review, execute updates, and dispatch approved financial requests</p>
                 </div>
-                <div class="flex justify-between items-center py-2 border-b border-white/[0.03]">
-                    <span class="text-gray-400">User UID Node</span>
-                    <span id="profile-stat-uid" class="text-white font-mono text-[11px] truncate max-w-[180px]">N/A</span>
-                </div>
-                <div class="flex justify-between items-center py-2 border-b border-white/[0.03]">
-                    <span class="text-gray-400">Registry Join Date</span>
-                    <span id="profile-stat-joindate" class="text-white font-semibold">Loading...</span>
-                </div>
-                <div class="flex justify-between items-center py-2 border-b border-white/[0.03]">
-                    <span class="text-gray-400">Current Vault Balance</span>
-                    <span id="profile-stat-balance" class="text-[#ffc700] font-bold">₹0</span>
-                </div>
-                <div class="flex justify-between items-center py-2 border-b border-white/[0.03]">
-                    <span class="text-gray-400">Total Ads Logged</span>
-                    <span id="profile-stat-ads" class="text-blue-400 font-bold">0</span>
-                </div>
-                <div class="flex justify-between items-center py-2">
-                    <span class="text-gray-400">Total Yield Earnings</span>
-                    <span id="profile-stat-earnings" class="text-emerald-400 font-bold">₹0</span>
+                <div class="premium-card p-5 space-y-4">
+                    <div class="flex gap-3">
+                        <input type="text" id="withdrawal-search-input" placeholder="Filter requests by recipient profile names or detail nodes..." class="input-field">
+                        <select id="withdrawal-filter-status" class="input-field max-w-[180px]">
+                            <option value="pending">Pending Queue Only</option>
+                            <option value="approved">Approved Requests</option>
+                            <option value="rejected">Rejected Rollbacks</option>
+                        </select>
+                    </div>
+                    <div class="overflow-x-auto rounded-lg border border-slate-800" id="withdrawals-table-view">
+                        </div>
                 </div>
             </div>
-        </section>
 
-    </main>
+            <div id="tasks" class="admin-page space-y-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h1 class="text-3xl font-extrabold tracking-tight">Task Asset Deployment</h1>
+                        <p class="text-xs text-slate-400 mt-0.5">Publish community channel assets mapped dynamically to application nodes</p>
+                    </div>
+                    <button onclick="openAddTaskModal()" class="btn-primary text-xs flex items-center gap-1.5"><i data-lucide="plus-circle" class="w-4 h-4"></i> Provision New Task</button>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="tasks-list-container">
+                    </div>
+            </div>
 
-    <nav class="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-[#0b0b0e]/95 backdrop-blur-md border-t border-white/[0.04] px-4 py-3 flex justify-around items-center z-40">
-        <button onclick="switchTab('home')" id="tab-home" class="nav-tab active flex flex-col items-center gap-1.5 text-gray-500 transition flex-1">
-            <i data-lucide="home" class="w-5 h-5"></i>
-            <span class="text-[9px] font-semibold tracking-wide">Home</span>
-        </button>
-        <button onclick="switchTab('tasks')" id="tab-tasks" class="nav-tab flex flex-col items-center gap-1.5 text-gray-500 transition flex-1">
-            <i data-lucide="check-square" class="w-5 h-5"></i>
-            <span class="text-[9px] font-semibold tracking-wide">Tasks</span>
-        </button>
-        <button onclick="switchTab('refer')" id="tab-refer" class="nav-tab flex flex-col items-center gap-1.5 text-gray-500 transition flex-1">
-            <i data-lucide="users" class="w-5 h-5"></i>
-            <span class="text-[9px] font-semibold tracking-wide">Refer</span>
-        </button>
-        <button onclick="switchTab('withdraw')" id="tab-withdraw" class="nav-tab flex flex-col items-center gap-1.5 text-gray-500 transition flex-1">
-            <i data-lucide="banknote" class="w-5 h-5"></i>
-            <span class="text-[9px] font-semibold tracking-wide">Payout</span>
-        </button>
-        <button onclick="switchTab('profile')" id="tab-profile" class="nav-tab flex flex-col items-center gap-1.5 text-gray-500 transition flex-1">
-            <i data-lucide="user" class="w-5 h-5"></i>
-            <span class="text-[9px] font-semibold tracking-wide">Profile</span>
-        </button>
-    </nav>
+            <div id="broadcast" class="admin-page space-y-6">
+                <div>
+                    <h1 class="text-3xl font-extrabold tracking-tight">App Broadcast Dispatch</h1>
+                    <p class="text-xs text-slate-400 mt-0.5">Inject dynamic layout updates or messaging nodes across endpoints</p>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="premium-card p-6 space-y-4">
+                        <h3 class="text-sm font-bold uppercase tracking-wider text-orange-500 flex items-center gap-2"><i data-lucide="bell" class="w-4 h-4"></i> Edit Realtime System Text Settings</h3>
+                        <div class="space-y-3">
+                            <div>
+                                <label class="text-xs font-medium text-slate-400 block mb-1.5">Announcement Banner Header Bar Content</label>
+                                <textarea id="broadcast-announcement-text" class="input-field h-24" placeholder="Enter marquee or system text strings here..."></textarea>
+                            </div>
+                            <div>
+                                <label class="text-xs font-medium text-slate-400 block mb-1.5">Popup Alert Modal Notification</label>
+                                <textarea id="broadcast-popup-text" class="input-field h-20" placeholder="Inject modal dialog notice payload text..."></textarea>
+                            </div>
+                            <button onclick="submitSystemBroadcast()" class="btn-primary w-full text-xs py-2.5">Deploy Global Text Matrix</button>
+                        </div>
+                    </div>
+                    <div class="premium-card p-6 flex flex-col justify-center items-center text-center p-8 space-y-3 border border-dashed border-slate-700">
+                        <div class="w-12 h-12 bg-orange-500/10 rounded-full flex items-center justify-center text-orange-500"><i data-lucide="radio" class="w-6 h-6"></i></div>
+                        <h4 class="text-sm font-bold">Real-time Transmission Channel Verified</h4>
+                        <p class="text-xs text-slate-400 max-w-xs">Any changes pushed via the broadcast matrix adjust the active config profile schema document in Firestore automatically.</p>
+                    </div>
+                </div>
+            </div>
 
-    <div id="custom-alert" class="hidden fixed bottom-24 left-4 right-4 max-w-sm mx-auto bg-[#16161f] border border-white/[0.08] p-4 rounded-xl shadow-2xl flex items-start gap-3 z-50">
-        <div class="p-1 bg-amber-500/10 rounded-lg border border-amber-500/20 mt-0.5">
-            <i data-lucide="bell" class="w-4 h-4 text-[#ffc700]"></i>
+            <div id="settings" class="admin-page space-y-6">
+                <div>
+                    <h1 class="text-3xl font-extrabold tracking-tight">App Architecture Configuration</h1>
+                    <p class="text-xs text-slate-400 mt-0.5">Modify parameters driving system rewards, rules, and ecosystem states</p>
+                </div>
+                <div class="space-y-6">
+                    <div class="premium-card p-6 space-y-4">
+                        <h3 class="text-sm font-bold uppercase tracking-wider text-orange-500 flex items-center gap-2"><i data-lucide="coins" class="w-4 h-4"></i> Ecosystem Reward Parameters</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div><label class="text-xs font-semibold text-slate-400 block mb-1">Standard Reward Per Ad View (₹)</label><input type="number" id="setting-adWatchReward" class="input-field"></div>
+                            <div><label class="text-xs font-semibold text-slate-400 block mb-1">Referral Invitation Bonus Drop (₹)</label><input type="number" id="setting-referralBonus" class="input-field"></div>
+                            <div><label class="text-xs font-semibold text-slate-400 block mb-1">User Onboarding Registration Bonus (₹)</label><input type="number" id="setting-signupBonus" class="input-field"></div>
+                            <div><label class="text-xs font-semibold text-slate-400 block mb-1">Minimum Safe Payout Threshold (₹)</label><input type="number" id="setting-minWithdrawal" class="input-field"></div>
+                            <div><label class="text-xs font-semibold text-slate-400 block mb-1">Required Active Referrals Target</label><input type="number" id="setting-referralRequirement" class="input-field"></div>
+                            <div><label class="text-xs font-semibold text-slate-400 block mb-1">Max Daily Permitted Ads Allocation</label><input type="number" id="setting-dailyAdLimit" class="input-field"></div>
+                        </div>
+                    </div>
+                    <div class="premium-card p-6 space-y-4">
+                        <h3 class="text-sm font-bold uppercase tracking-wider text-cyan-400 flex items-center gap-2"><i data-lucide="power" class="w-4 h-4"></i> Application Functional Engine Controls</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div class="space-y-4">
+                                <div class="flex items-center justify-between p-3 bg-[#0f172a] rounded-lg border border-slate-800">
+                                    <div><p class="text-xs font-bold">Maintenance Lockdown Mode</p><p class="text-[10px] text-slate-400">Restricts user pane client requests globally</p></div>
+                                    <input type="checkbox" id="setting-maintenanceMode" class="w-4 h-4 accent-orange-500">
+                                </div>
+                                <div class="flex items-center justify-between p-3 bg-[#0f172a] rounded-lg border border-slate-800">
+                                    <div><p class="text-xs font-bold">Enable Financial Payout Dispatches</p><p class="text-[10px] text-slate-400">Toggle withdrawal submission pathways</p></div>
+                                    <input type="checkbox" id="setting-enableWithdraw" class="w-4 h-4 accent-orange-500">
+                                </div>
+                            </div>
+                            <div class="space-y-4">
+                                <div class="flex items-center justify-between p-3 bg-[#0f172a] rounded-lg border border-slate-800">
+                                    <div><p class="text-xs font-bold">Enable Ad Monetization Pipeline</p><p class="text-[10px] text-slate-400">Controls core validation tracking blocks</p></div>
+                                    <input type="checkbox" id="setting-enableAds" class="w-4 h-4 accent-orange-500">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="premium-card p-6 space-y-4">
+                        <h3 class="text-sm font-bold uppercase tracking-wider text-indigo-400 flex items-center gap-2"><i data-lucide="layers" class="w-4 h-4"></i> AdsGram API Node Specifications</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div><label class="text-xs font-semibold text-slate-400 block mb-1">Official Script Placement Block ID</label><input type="text" id="setting-adsgramBlockId" class="input-field"></div>
+                            <div class="flex items-center justify-between p-3 bg-[#0f172a] rounded-lg border border-slate-800">
+                                <div><p class="text-xs font-bold">Enable AdsGram Engine</p></div>
+                                <input type="checkbox" id="setting-enableAdsgram" class="w-4 h-4 accent-orange-500">
+                            </div>
+                            <div class="flex items-center justify-between p-3 bg-[#0f172a] rounded-lg border border-slate-800">
+                                <div><p class="text-xs font-bold">Activate Developer Test Mode Sandbox</p></div>
+                                <input type="checkbox" id="setting-adsgramTestMode" class="w-4 h-4 accent-orange-500">
+                            </div>
+                        </div>
+                    </div>
+                    <button onclick="commitMasterMatrixSettings()" class="btn-primary w-full py-3.5 font-bold text-sm tracking-wide">Write Configuration State to Firestore</button>
+                </div>
+            </div>
+
+            <div id="analytics" class="admin-page space-y-6">
+                <div>
+                    <h1 class="text-3xl font-extrabold tracking-tight">Ecosystem Performance Metrics</h1>
+                    <p class="text-xs text-slate-400 mt-0.5">Calculated analytics based on client history logs</p>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6" id="analytics-charts-grid">
+                    <div class="premium-card p-6 space-y-2">
+                        <h4 class="text-xs font-bold uppercase tracking-wider text-slate-400">Projected System Revenue Run Rate</h4>
+                        <div class="text-2xl font-black text-emerald-400" id="analytics-revenue-estimate">₹0.00</div>
+                        <p class="text-[10px] text-slate-500">Estimated based on total tracked system ad watch interactions times default valuation nodes.</p>
+                    </div>
+                    <div class="premium-card p-6 space-y-2">
+                        <h4 class="text-xs font-bold uppercase tracking-wider text-slate-400">Total Capital Ledger Dispensed</h4>
+                        <div class="text-2xl font-black text-orange-400" id="analytics-payout-total">₹0.00</div>
+                        <p class="text-[10px] text-slate-500">Aggregated historical total across approved workflow operations data elements.</p>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <div id="task-modal" class="hidden fixed inset-0 z-50 bg-[#0f172a]/70 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="premium-card w-full max-w-md p-6 space-y-4">
+            <div class="flex justify-between items-center">
+                <h3 class="text-base font-bold text-white" id="task-modal-title">Provision Task Node</h3>
+                <button onclick="closeTaskModal()" class="text-slate-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+            <input type="hidden" id="task-editing-id">
+            <div class="space-y-3">
+                <div>
+                    <label class="text-xs font-semibold text-slate-400 block mb-1">Channel Branding Title Name</label>
+                    <input type="text" id="task-channel-name" placeholder="e.g., BookBeat Official" class="input-field">
+                </div>
+                <div>
+                    <label class="text-xs font-semibold text-slate-400 block mb-1">Target Deep Link Redirection URL</label>
+                    <input type="url" id="task-channel-url" placeholder="https://t.me/example_channel" class="input-field">
+                </div>
+                <div>
+                    <label class="text-xs font-semibold text-slate-400 block mb-1">Verification Task Completion Credit Payout (₹ Value)</label>
+                    <input type="number" id="task-reward-amount" placeholder="50" class="input-field">
+                </div>
+                <div class="flex items-center justify-between p-2 bg-[#0f172a] rounded-lg border border-slate-800">
+                    <span class="text-xs font-bold text-slate-300">Set Task State to Active Immediately</span>
+                    <input type="checkbox" id="task-active-state" checked class="w-4 h-4 accent-orange-500">
+                </div>
+            </div>
+            <button onclick="saveTaskConfiguration()" class="btn-primary w-full text-xs py-2.5">Save Data Blueprint</button>
         </div>
-        <div class="flex-1">
-            <h4 class="text-xs font-bold text-white uppercase tracking-wider">Platform Notification</h4>
-            <p id="custom-alert-msg" class="text-xs text-gray-300 mt-1 leading-relaxed"></p>
+    </div>
+
+    <div id="user-detail-modal" class="hidden fixed inset-0 z-50 bg-[#0f172a]/70 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="premium-card w-full max-w-lg p-6 space-y-6 max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+                <div class="flex items-center gap-3">
+                    <img id="usr-detail-avatar" src="" class="w-10 h-10 rounded-full border border-slate-700 object-cover">
+                    <div>
+                        <h3 class="text-base font-bold text-white" id="usr-detail-name">Loading Profile...</h3>
+                        <p class="text-xs text-orange-500" id="usr-detail-username">@username</p>
+                    </div>
+                </div>
+                <button onclick="closeUserDetailModal()" class="text-slate-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+            <input type="hidden" id="usr-detail-uid">
+            
+            <div class="grid grid-cols-2 gap-4 text-xs">
+                <div class="bg-[#0f172a] p-3 rounded-lg border border-slate-800">
+                    <span class="text-slate-400 block mb-0.5">UID Record Node</span>
+                    <span class="font-mono text-white font-semibold" id="usr-detail-id-str">N/A</span>
+                </div>
+                <div class="bg-[#0f172a] p-3 rounded-lg border border-slate-800">
+                    <span class="text-slate-400 block mb-0.5">Ecosystem Wallet Vault</span>
+                    <span class="text-emerald-400 font-bold text-sm" id="usr-detail-balance">₹0</span>
+                </div>
+            </div>
+
+            <div class="premium-card p-4 space-y-3">
+                <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider">Modify Vault Resource Allocation</h4>
+                <div class="flex gap-2">
+                    <input type="number" id="usr-balance-delta" placeholder="Enter ₹ value amount" class="input-field text-xs">
+                    <button onclick="adjustUserBalance('add')" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-3 rounded-lg text-xs">Credit</button>
+                    <button onclick="adjustUserBalance('deduct')" class="bg-rose-600 hover:bg-rose-500 text-white font-bold px-3 rounded-lg text-xs">Debit</button>
+                    <button onclick="adjustUserBalance('reset')" class="bg-slate-700 hover:bg-slate-600 text-white font-bold px-3 rounded-lg text-xs">Reset</button>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="premium-card p-4 space-y-2">
+                    <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider">Account Security Protocols</h4>
+                    <div id="user-ban-toggle-container">
+                        </div>
+                </div>
+                <div class="premium-card p-4 space-y-2">
+                    <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider">Destructive Actions</h4>
+                    <button onclick="deleteUserFromLedger()" class="w-full bg-red-600/10 hover:bg-red-600 text-red-400 hover:text-white border border-red-600/20 py-2 rounded-lg text-xs font-bold transition">
+                        Purge User Record Permanently
+                    </button>
+                </div>
+            </div>
         </div>
-        <button onclick="dismissAlert()" class="text-gray-500 hover:text-white transition">
-            <i data-lucide="x" class="w-4 h-4"></i>
-        </button>
+    </div>
+
+    <div id="toast-notification" class="hidden fixed bottom-6 right-6 z-50 bg-emerald-600 text-white px-5 py-3 rounded-xl shadow-2xl flex items-center gap-2">
+        <i data-lucide="info" class="w-4 h-4"></i>
+        <p id="toast-message" class="text-xs font-semibold"></p>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-        import { getFirestore, doc, getDoc, setDoc, updateDoc, collection, addDoc, query, where, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+        import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+        import { getFirestore, doc, getDoc, setDoc, updateDoc, deleteDoc, collection, getDocs, onSnapshot, query, where, writeBatch } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
+        // MATCHED SECURE FIRMWARE CONFIGURATION NODE ARRAYS
         const firebaseConfig = {
             apiKey: "AIzaSyASbVOB286X7z19lfP4nav0abKDxZ4CBBg",
             authDomain: "earn-b323d.firebaseapp.com",
@@ -356,447 +359,614 @@
         };
 
         const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
         const db = getFirestore(app);
 
-        // Global State Objects
-        window.appConfig = {
-            minWithdrawal: 500,
-            adWatchReward: 10,
-            paymentMethods: ["UPI", "Paytm"],
-            referralBonus: 50,
-            announcement: "Welcome to GameRewarder Premium Dynamic Workspace!"
-        };
+        const ALLOWED_ADMIN_UID = "snBFDvmr4tRnJ4NuERfO4uhDlGn1";
 
-        window.userData = {
-            uid: "",
-            name: "",
-            username: "",
-            tgId: "",
-            photoUrl: "",
-            balance: 0,
-            totalEarned: 0,
-            adsWatched: 0,
-            referrals: 0,
-            referralCode: "",
-            referredBy: null,
-            joinDateString: "Processing...",
-            completedTasks: []
-        };
-
-        let activeWithdrawalListenerUnsubscribe = null;
-        let activeTasksListenerUnsubscribe = null;
-
-        // Declared exactly once globally as required
-        window.AdController = null;
+        // Global State Repositories
+        let activeMemoryCachedUsers = [];
+        let activeMemoryCachedWithdrawals = [];
+        let globalApplicationConfiguration = {};
 
         window.onload = () => {
-            try {
-                if (window.Adsgram) {
-                    window.AdController = window.Adsgram.init({
-                        blockId: "37369"
-                    });
-                }
-            } catch (err) {
-                console.error("AdsGram setup initialization failure:", err);
-            }
-
             lucide.createIcons();
-            setupEventListeners();
-            initializeAppContainer();
+            bindFunctionalNavigationListeners();
+            onAuthStateChanged(auth, handleSystemSecurityVerificationFlow);
         };
 
-        function setupEventListeners() {
-            document.getElementById('btn-trigger-ad-watch').addEventListener('click', window.triggerPremiumAdSequence);
-        }
-
-        function initializeRealtimeConfigSync() {
-            onSnapshot(doc(db, "config", "main"), (snapshot) => {
-                if (snapshot.exists()) {
-                    window.appConfig = { ...window.appConfig, ...snapshot.data() };
-                    
-                    const banner = document.getElementById('announcement-banner');
-                    if (window.appConfig.announcement) {
-                        document.getElementById('announcement-text').textContent = window.appConfig.announcement;
-                        banner.classList.remove('hidden');
-                    } else {
-                        banner.classList.add('hidden');
-                    }
-                    window.updateAllUI();
-                }
+        function bindFunctionalNavigationListeners() {
+            document.getElementById('login-btn').addEventListener('click', processAdminAuthenticationRequest);
+            document.getElementById('logout-btn').addEventListener('click', () => signOut(auth));
+            
+            document.querySelectorAll('.sidebar-link').forEach(link => {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    switchActiveMatrixPage(link.dataset.page);
+                });
             });
+
+            document.getElementById('user-search-input').addEventListener('input', reRenderUsersTableContainer);
+            document.getElementById('withdrawal-search-input').addEventListener('input', reRenderWithdrawalsTableContainer);
+            document.getElementById('withdrawal-filter-status').addEventListener('change', reRenderWithdrawalsTableContainer);
         }
 
-        window.onTelegramAuth = async function(tgUser) {
-            if (!tgUser || !tgUser.id) {
-                document.getElementById('app-loader').classList.add('hidden');
+        async function handleSystemSecurityVerificationFlow(user) {
+            const loaderNode = document.getElementById('loader');
+            loaderNode.classList.remove('hidden');
+
+            if (user) {
+                if (user.uid === ALLOWED_ADMIN_UID) {
+                    document.getElementById('auth-section').classList.add('hidden');
+                    document.getElementById('panel-section').classList.remove('hidden');
+                    
+                    // Initialize background real-time sync pipelines
+                    initializeEcosystemStreams();
+                    switchActiveMatrixPage('dashboard');
+                } else {
+                    document.getElementById('login-error').textContent = "Security Fault: UID token invalid for admin operations context.";
+                    await signOut(auth);
+                    toggleAuthViewVisibility(true);
+                }
+            } else {
+                toggleAuthViewVisibility(true);
+            }
+            loaderNode.classList.add('hidden');
+        }
+
+        function toggleAuthViewVisibility(showAuth) {
+            if(showAuth) {
+                document.getElementById('auth-section').classList.remove('hidden');
+                document.getElementById('panel-section').classList.add('hidden');
+            }
+        }
+
+        async function processAdminAuthenticationRequest() {
+            const email = document.getElementById('login-email').value.trim();
+            const password = document.getElementById('login-password').value;
+            const errorElement = document.getElementById('login-error');
+            errorElement.textContent = '';
+
+            if(!email || !password) {
+                errorElement.textContent = "Credential processing error: Empty parameters.";
                 return;
             }
-            
-            document.getElementById('app-loader').classList.remove('hidden');
-            const uidStr = `TG-${tgUser.id}`;
-            const userProfileReference = doc(db, "users", uidStr);
 
-            window.userData.uid = uidStr;
-            window.userData.tgId = tgUser.id;
-            window.userData.name = tgUser.first_name || "Telegram User";
-            window.userData.username = tgUser.username ? `@${tgUser.username}` : "@User";
-            window.userData.photoUrl = tgUser.photo_url || "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'><circle cx='50' cy='50' r='50' fill='%231a1a24'/></svg>";
-
+            document.getElementById('loader').classList.remove('hidden');
             try {
-                const userSnapshot = await getDoc(userProfileReference);
-
-                if (userSnapshot.exists()) {
-                    const cloudData = userSnapshot.data();
-                    window.userData = { ...window.userData, ...cloudData };
-                    
-                    if (cloudData.createdAt) {
-                        window.userData.joinDateString = new Date(cloudData.createdAt.seconds * 1000).toLocaleDateString();
-                    }
-                    await updateDoc(userProfileReference, { 
-                        lastActiveTime: serverTimestamp(),
-                        name: window.userData.name,
-                        username: window.userData.username,
-                        photoUrl: window.userData.photoUrl
-                    });
-                } else {
-                    const generatedCode = "GR" + Math.floor(1000 + Math.random() * 9000);
-                    window.userData.referralCode = generatedCode;
-                    window.userData.joinDateString = new Date().toLocaleDateString();
-                    window.userData.completedTasks = [];
-
-                    await setDoc(userProfileReference, {
-                        uid: uidStr,
-                        name: window.userData.name,
-                        username: window.userData.username,
-                        tgId: window.userData.tgId,
-                        photoUrl: window.userData.photoUrl,
-                        balance: 0,
-                        totalEarned: 0,
-                        adsWatched: 0,
-                        referrals: 0,
-                        referralCode: generatedCode,
-                        referredBy: null,
-                        completedTasks: [],
-                        lastActiveTime: serverTimestamp(),
-                        createdAt: serverTimestamp()
-                    });
-                }
-
-                // Instantly remove overlay curtain
-                document.getElementById('auth-overlay').classList.add('hidden');
-                document.getElementById('app-loader').classList.add('hidden');
-                
-                initializeRealtimeConfigSync();
-                window.updateAllUI();
-                window.setupRealtimeWithdrawalLogs();
-                window.setupRealtimeTasksList();
+                await signInWithEmailAndPassword(auth, email, password);
             } catch (err) {
-                console.error("Auth syncing issue:", err);
-                document.getElementById('app-loader').classList.add('hidden');
-                window.showAlert("Sync Error: " + err.message);
+                errorElement.textContent = "Authentication failure: Invalid passkey mapping.";
+                console.error(err);
+            } finally {
+                document.getElementById('loader').classList.add('hidden');
             }
-        };
+        }
 
-        window.updateAllUI = function() {
-            document.getElementById('header-user-avatar').src = window.userData.photoUrl;
-            document.getElementById('header-user-name').textContent = window.userData.name;
-            document.getElementById('header-user-username').textContent = window.userData.username;
-
-            document.getElementById('header-balance').textContent = window.userData.balance;
-            document.getElementById('dashboard-main-balance').textContent = window.userData.balance;
-            document.getElementById('dashboard-welcome-name').textContent = window.userData.name;
-            document.getElementById('stat-total-earned').textContent = `₹${window.userData.totalEarned}`;
-            document.getElementById('stat-ads-watched').textContent = window.userData.adsWatched;
-            document.getElementById('stat-referrals').textContent = window.userData.referrals;
-
-            document.getElementById('profile-pane-avatar').src = window.userData.photoUrl;
-            document.getElementById('profile-pane-name').textContent = window.userData.name;
-            document.getElementById('profile-pane-username').textContent = window.userData.username;
-            document.getElementById('profile-stat-tgid').textContent = window.userData.tgId || "N/A";
-            document.getElementById('profile-stat-uid').textContent = window.userData.uid || "N/A";
-            document.getElementById('profile-stat-joindate').textContent = window.userData.joinDateString;
-            document.getElementById('profile-stat-balance').textContent = `₹${window.userData.balance}`;
-            document.getElementById('profile-stat-ads').textContent = window.userData.adsWatched;
-            document.getElementById('profile-stat-earnings').textContent = `₹${window.userData.totalEarned}`;
-
-            document.getElementById('criteria-balance-text').textContent = `Current: ₹${window.userData.balance} / Required: ₹${window.appConfig.minWithdrawal}`;
+        function switchActiveMatrixPage(pageId) {
+            document.querySelectorAll('.admin-page').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.sidebar-link').forEach(l => l.classList.remove('active'));
             
-            const balanceConditionMet = window.userData.balance >= window.appConfig.minWithdrawal;
-            document.getElementById('criteria-balance-icon').innerHTML = balanceConditionMet 
-                ? `<i data-lucide="check-circle-2" class="w-5 h-5 text-emerald-400"></i>` 
-                : `<i data-lucide="x-circle" class="w-5 h-5 text-rose-500"></i>`;
+            const targetedPage = document.getElementById(pageId);
+            const targetedTab = document.querySelector(`.sidebar-link[data-page="${pageId}"]`);
+            
+            if(targetedPage) targetedPage.classList.add('active');
+            if(targetedTab) targetedTab.classList.add('active');
 
-            const referralConditionMet = window.userData.referrals >= 2;
-            document.getElementById('criteria-referrals-icon').innerHTML = referralConditionMet 
-                ? `<i data-lucide="check-circle-2" class="w-5 h-5 text-emerald-400"></i>` 
-                : `<i data-lucide="x-circle" class="w-5 h-5 text-rose-500"></i>`;
-
+            if (pageId === 'settings') populateActiveSettingsForm();
             lucide.createIcons();
-        };
+        }
 
-        window.setupRealtimeTasksList = function() {
-            if (activeTasksListenerUnsubscribe) activeTasksListenerUnsubscribe();
-            
-            activeTasksListenerUnsubscribe = onSnapshot(collection(db, "tasks"), (snapshot) => {
-                const taskContainer = document.getElementById('tasks-system-list');
+        // --- REALTIME DATA STREAM ENGINE CONFIGURATIONS ---
+        function initializeEcosystemStreams() {
+            // 1. Real-time Config Document Synchronization
+            onSnapshot(doc(db, "config", "main"), (snapshot) => {
+                if(snapshot.exists()) {
+                    globalApplicationConfiguration = snapshot.data();
+                }
+            });
+
+            // 2. Real-time Users List Ledger Stream
+            onSnapshot(collection(db, "users"), (snapshot) => {
+                activeMemoryCachedUsers = [];
+                snapshot.forEach(docObj => {
+                    activeMemoryCachedUsers.push({ id: docObj.id, ...docObj.data() });
+                });
+                calculateMetricAggregations();
+                reRenderUsersTableContainer();
+            });
+
+            // 3. Real-time Withdrawal Request Ledger Stream
+            onSnapshot(collection(db, "withdrawals"), (snapshot) => {
+                activeMemoryCachedWithdrawals = [];
+                snapshot.forEach(docObj => {
+                    activeMemoryCachedWithdrawals.push({ id: docObj.id, ...docObj.data() });
+                });
+                calculateMetricAggregations();
+                reRenderWithdrawalsTableContainer();
+            });
+
+            // 4. Real-time Community Verification Task Asset Stream
+            onSnapshot(collection(db, "tasks"), (snapshot) => {
+                const container = document.getElementById('tasks-list-container');
                 if(snapshot.empty) {
-                    taskContainer.innerHTML = `<p class="text-xs text-gray-500 text-center py-6">No tasks published inside admin collections nodes.</p>`;
+                    container.innerHTML = `<p class="text-xs text-slate-500 py-4 col-span-2">No system verification task entities active within the collection branch.</p>`;
                     return;
                 }
-
+                
                 let tasksMarkup = "";
                 snapshot.forEach(docObj => {
                     const task = docObj.data();
                     const taskId = docObj.id;
-                    const taskReward = task.rewardAmount || 0;
-                    const hasCompleted = window.userData.completedTasks && window.userData.completedTasks.includes(taskId);
-
                     tasksMarkup += `
-                        <div class="premium-card p-4 rounded-xl flex flex-col space-y-3">
+                        <div class="premium-card p-5 flex flex-col justify-between space-y-4">
                             <div class="flex justify-between items-start">
-                                <div class="space-y-0.5">
-                                    <h4 class="text-sm font-bold text-white">${task.channelName || "Telegram Channel Task"}</h4>
-                                    <p class="text-xs text-emerald-400 font-semibold">+₹${taskReward} Bounty Reward</p>
+                                <div>
+                                    <h4 class="text-sm font-bold text-white">${task.channelName || 'Telegram Task Node'}</h4>
+                                    <p class="text-xs text-slate-400 mt-0.5 truncate max-w-[240px] font-mono">${task.channelUrl || '#'}</p>
                                 </div>
-                                ${hasCompleted ? 
-                                    `<span class="text-[10px] font-bold uppercase text-emerald-400 bg-emerald-500/10 px-2 py-1 rounded">Completed</span>` : 
-                                    `<span class="text-[10px] font-bold uppercase text-amber-400 bg-amber-500/10 px-2 py-1 rounded">Active</span>`
-                                }
+                                <span class="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded ${task.isActive ? 'bg-emerald-500/10 text-emerald-400' : 'bg-slate-800 text-slate-400'}">
+                                    ${task.isActive ? 'Active State' : 'Disabled'}
+                                </span>
                             </div>
-                            <div class="flex gap-2.5 pt-1">
-                                <a href="${task.channelUrl || '#'}" target="_blank" class="flex-1 bg-white/5 border border-white/10 text-center py-2 rounded-lg text-xs font-bold text-white block">
-                                    Join Channel
-                                </a>
-                                <button onclick="verifySystemTask('${taskId}', ${taskReward})" ${hasCompleted ? 'disabled' : ''} class="flex-1 ${hasCompleted ? 'bg-gray-800 text-gray-500' : 'btn-premium-gold'} text-center py-2 rounded-lg text-xs font-bold">
-                                    ${hasCompleted ? 'Verified' : 'Verify'}
-                                </button>
+                            <div class="flex items-center justify-between border-t border-slate-800 pt-3">
+                                <span class="text-xs font-bold text-orange-400">₹${task.rewardAmount || 0} Credit Drop</span>
+                                <div class="flex gap-2">
+                                    <button onclick="openEditTaskModal('${taskId}', '${escape(task.channelName)}', '${task.channelUrl}', ${task.rewardAmount}, ${task.isActive})" class="bg-slate-800 text-white p-2 rounded-lg hover:bg-slate-700 transition"><i data-lucide="edit" class="w-3.5 h-3.5"></i></button>
+                                    <button onclick="deleteTaskNodeAsset('${taskId}')" class="bg-red-600/10 text-red-400 p-2 rounded-lg hover:bg-red-600 hover:text-white transition"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>
+                                </div>
                             </div>
                         </div>
                     `;
                 });
-
-                taskContainer.innerHTML = tasksMarkup;
+                container.innerHTML = tasksMarkup;
                 lucide.createIcons();
             });
-        };
+        }
 
-        window.verifySystemTask = async function(taskId, rewardVal) {
-            if (window.userData.completedTasks && window.userData.completedTasks.includes(taskId)) return;
+        // --- DASHBOARD METRIC CALCULATION NODES ---
+        function calculateMetricAggregations() {
+            const gridContainer = document.getElementById('stats-grid');
+            
+            const totalUsers = activeMemoryCachedUsers.length;
+            const bannedUsers = activeMemoryCachedUsers.filter(u => u.isBlocked === true).length;
+            
+            const pendingWithdrawals = activeMemoryCachedWithdrawals.filter(w => w.status === 'pending');
+            const approvedWithdrawals = activeMemoryCachedWithdrawals.filter(w => w.status === 'approved');
+            const rejectedWithdrawals = activeMemoryCachedWithdrawals.filter(w => w.status === 'rejected' || w.status === 'declined');
 
-            document.getElementById('app-loader').classList.remove('hidden');
-            setTimeout(async () => {
-                try {
-                    if (!window.userData.completedTasks) window.userData.completedTasks = [];
-                    window.userData.completedTasks.push(taskId);
-                    
-                    window.userData.balance += parseInt(rewardVal) || 0;
-                    window.userData.totalEarned += parseInt(rewardVal) || 0;
+            const totalApprovedPayoutVal = approvedWithdrawals.reduce((acc, curr) => acc + (parseInt(curr.amount) || 0), 0);
+            const totalPendingPayoutVal = pendingWithdrawals.reduce((acc, curr) => acc + (parseInt(curr.amount) || 0), 0);
 
-                    await updateDoc(doc(db, "users", window.userData.uid), {
-                        balance: window.userData.balance,
-                        totalEarned: window.userData.totalEarned,
-                        completedTasks: window.userData.completedTasks
-                    });
+            // Dynamic Analytics calculations updates
+            let aggregateTrackedAdsWatched = activeMemoryCachedUsers.reduce((acc, curr) => acc + (parseInt(curr.adsWatched) || 0), 0);
+            document.getElementById('analytics-revenue-estimate').textContent = `₹${(aggregateTrackedAdsWatched * 0.60).toFixed(2)}`;
+            document.getElementById('analytics-payout-total').textContent = `₹${totalApprovedPayoutVal}.00`;
 
-                    window.showAlert(`Task verification successful! +₹${rewardVal} credited.`);
-                    window.updateAllUI();
-                } catch(err) {
-                    window.showAlert("Verification payload updating error: " + err.message);
-                } finally {
-                    document.getElementById('app-loader').classList.add('hidden');
-                }
-            }, 2000);
-        };
+            gridContainer.innerHTML = `
+                <div class="premium-card p-5 space-y-2"><p class="text-xs font-medium text-slate-400 uppercase tracking-wider">Total Registered Accounts</p><p class="text-3xl font-black text-white">${totalUsers}</p><span class="text-[10px] text-red-400 font-semibold">${bannedUsers} Restricted Nodes</span></div>
+                <div class="premium-card p-5 space-y-2"><p class="text-xs font-medium text-slate-400 uppercase tracking-wider">Pending Approvals Count</p><p class="text-3xl font-black text-orange-500">${pendingWithdrawals.length}</p><span class="text-[10px] text-slate-400">Value Matrix: ₹${totalPendingPayoutVal}</span></div>
+                <div class="premium-card p-5 space-y-2"><p class="text-xs font-medium text-slate-400 uppercase tracking-wider">Dispatched Liquidity</p><p class="text-3xl font-black text-emerald-400">₹${totalApprovedPayoutVal}</p><span class="text-[10px] text-slate-400">Total Approved: ${approvedWithdrawals.length}</span></div>
+                <div class="premium-card p-5 space-y-2"><p class="text-xs font-medium text-slate-400 uppercase tracking-wider">Rejected Reversals</p><p class="text-3xl font-black text-slate-400">${rejectedWithdrawals.length}</p><span class="text-[10px] text-slate-500">Returned to Vault Ledgers</span></div>
+            `;
+        }
 
-        window.setupRealtimeWithdrawalLogs = function() {
-            if (activeWithdrawalListenerUnsubscribe) activeWithdrawalListenerUnsubscribe();
-            const queryRef = query(collection(db, "withdrawals"), where("userId", "==", window.userData.uid));
-            activeWithdrawalListenerUnsubscribe = onSnapshot(queryRef, (snapshot) => {
-                const logsContainer = document.getElementById('withdrawal-history-list');
-                if (snapshot.empty) {
-                    logsContainer.innerHTML = `<p class="text-xs text-gray-500 text-center py-4">No logged withdrawal workflows detected yet.</p>`;
-                    return;
-                }
-                let sortedDocs = [];
-                snapshot.forEach(doc => { sortedDocs.push({ id: doc.id, ...doc.data() }); });
-                sortedDocs.sort((a, b) => (b.requestedAt?.seconds || 0) - (a.requestedAt?.seconds || 0));
+        // --- RENDER COMPONENT: USERS LIFECYCLE GRID TABLE ---
+        function reRenderUsersTableContainer() {
+            const filterValue = document.getElementById('user-search-input').value.toLowerCase().trim();
+            const viewTargetElement = document.getElementById('users-table-view');
 
-                logsContainer.innerHTML = sortedDocs.map(log => {
-                    let statusColor = "text-amber-400";
-                    if (log.status === "approved") statusColor = "text-emerald-400";
-                    if (log.status === "declined" || log.status === "rejected") statusColor = "text-rose-500";
-                    const dateString = log.requestedAt ? new Date(log.requestedAt.seconds * 1000).toLocaleDateString() : "Processing...";
-                    return `
-                        <div class="premium-card p-4 rounded-xl flex justify-between items-center">
-                            <div class="space-y-0.5">
-                                <p class="text-sm font-bold text-white">₹${log.amount} — ${log.method}</p>
-                                <p class="text-[10px] text-gray-400 truncate max-w-[200px] font-mono">${log.paymentDetail}</p>
-                                <p class="text-[9px] text-gray-500 font-medium">Request Date: ${dateString}</p>
-                            </div>
-                            <span class="text-xs font-bold uppercase tracking-wider ${statusColor}">${log.status}</span>
-                        </div>
-                    `;
-                }).join('');
-                lucide.createIcons();
+            let filteredArray = activeMemoryCachedUsers;
+            if(filterValue) {
+                filteredArray = activeMemoryCachedUsers.filter(u => 
+                    (u.name && u.name.toLowerCase().includes(filterValue)) ||
+                    (u.uid && u.uid.toLowerCase().includes(filterValue)) ||
+                    (u.tgId && String(u.tgId).includes(filterValue))
+                );
+            }
+
+            if(filteredArray.length === 0) {
+                viewTargetElement.innerHTML = `<p class="text-xs text-slate-400 text-center py-8">No targeted system records matched search terms.</p>`;
+                return;
+            }
+
+            let markup = `
+                <table class="w-full text-xs text-left text-slate-300 table-fixed">
+                    <thead class="text-[10px] text-slate-400 uppercase bg-slate-900 border-b border-slate-800">
+                        <tr>
+                            <th class="px-4 py-3 w-1/12">Avatar</th>
+                            <th class="px-4 py-3 w-3/12">Profile Branding</th>
+                            <th class="px-4 py-3 w-3/12">Unique Node Identifier</th>
+                            <th class="px-4 py-3 w-2/12">Ledger Balance</th>
+                            <th class="px-4 py-3 w-3/12 text-center">Operation Metrics</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-800/50 bg-[#1e293b]">
+            `;
+
+            filteredArray.forEach(user => {
+                const avatar = user.photoUrl || "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'><circle cx='50' cy='50' r='50' fill='%230f172a'/></svg>";
+                markup += `
+                    <tr class="hover:bg-slate-800/30 transition">
+                        <td class="px-4 py-3"><img src="${avatar}" class="w-7 h-7 rounded-full object-cover border border-slate-700"></td>
+                        <td class="px-4 py-3 truncate font-bold text-white">${user.name || 'Telegram Node'}<span class="block text-[10px] font-medium text-slate-400">${user.username || '@unspecified'}</span></td>
+                        <td class="px-4 py-3 truncate font-mono text-slate-400">${user.uid || user.id}</td>
+                        <td class="px-4 py-3 font-bold text-orange-400">₹${user.balance || 0}</td>
+                        <td class="px-4 py-3 flex items-center justify-center gap-1.5 mt-1">
+                            <button onclick="openUserDetailModal('${user.id}')" class="bg-slate-700 hover:bg-orange-600 text-white font-semibold px-2.5 py-1 rounded transition text-[10px]">Inspect File</button>
+                        </td>
+                    </tr>
+                `;
             });
-        };
 
-        // Fully Restored and Optimized AdsGram SDK Earning Verification Lifecycle Trigger
-        window.triggerPremiumAdSequence = async function() {
-            if (!window.AdController) {
-                return window.showAlert("Ads SDK is syncing. Please wait a moment.");
+            markup += `</tbody></table>`;
+            viewTargetElement.innerHTML = markup;
+        }
+
+        // --- USER DETAILED DRILL DOWN MODAL FUNCTIONS ---
+        window.openUserDetailModal = function(userId) {
+            const matchingRecord = activeMemoryCachedUsers.find(u => u.id === userId);
+            if(!matchingRecord) return;
+
+            document.getElementById('usr-detail-uid').value = matchingRecord.id;
+            document.getElementById('usr-detail-name').textContent = matchingRecord.name || "Telegram User";
+            document.getElementById('usr-detail-username').textContent = matchingRecord.username || "@Unspecified";
+            document.getElementById('usr-detail-id-str').textContent = matchingRecord.uid || matchingRecord.id;
+            document.getElementById('usr-detail-balance').textContent = `₹${matchingRecord.balance || 0}`;
+            document.getElementById('usr-detail-avatar').src = matchingRecord.photoUrl || "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'><circle cx='50' cy='50' r='50' fill='%230f172a'/></svg>";
+
+            const toggleContainer = document.getElementById('user-ban-toggle-container');
+            if(matchingRecord.isBlocked) {
+                toggleContainer.innerHTML = `<button onclick="updateAccountRestrictionState(false)" class="w-full bg-emerald-600 text-white font-bold py-2 rounded-lg text-xs">Lift Security Restriction (Unban)</button>`;
+            } else {
+                toggleContainer.innerHTML = `<button onclick="updateAccountRestrictionState(true)" class="w-full bg-red-600 text-white font-bold py-2 rounded-lg text-xs">Enforce Account Restriction (Ban)</button>`;
             }
 
-            const popupElement = document.getElementById('ad-loading-popup');
-            popupElement.classList.remove('hidden');
+            document.getElementById('user-detail-modal').classList.remove('hidden');
+        };
 
+        window.closeUserDetailModal = function() {
+            document.getElementById('user-detail-modal').classList.add('hidden');
+            document.getElementById('usr-balance-delta').value = "";
+        };
+
+        window.updateAccountRestrictionState = async function(statusBooleanValue) {
+            const targetedUid = document.getElementById('usr-detail-uid').value;
+            if(!targetedUid) return;
+
+            document.getElementById('loader').classList.remove('hidden');
             try {
-                await window.AdController.show();
-                popupElement.classList.add('hidden');
-
-                const rewardDeltaValue = parseInt(window.appConfig.adWatchReward) || 10;
-                window.userData.balance += rewardDeltaValue;
-                window.userData.totalEarned += rewardDeltaValue;
-                window.userData.adsWatched += 1;
-
-                await updateDoc(doc(db, "users", window.userData.uid), {
-                    balance: window.userData.balance,
-                    totalEarned: window.userData.totalEarned,
-                    adsWatched: window.userData.adsWatched
-                });
-
-                window.updateAllUI();
-                window.showAlert(`Premium Ad View Complete! Reward dropped: +₹${rewardDeltaValue}`);
-            } catch (adError) {
-                popupElement.classList.add('hidden');
-                console.warn("AdsGram interface skipped/closed or exception:", adError);
-                window.showAlert("Ad display interrupted or skipped. No tracking rewards were credited.");
-            }
-        };
-
-        window.handleApplyReferralCode = async function() {
-            const enteredCodeStr = document.getElementById('enter-referral-code').value.trim();
-            if (!enteredCodeStr || enteredCodeStr === window.userData.uid) return window.showAlert("Invalid code application target payload.");
-            window.showAlert("Referral connection token processed.");
-        };
-
-        window.handleWithdrawal = async function() {
-            const contextRequestedValueAmount = parseInt(document.getElementById('withdraw-amount').value);
-            const contextSelectedPayoutMethod = document.getElementById('withdraw-method').value;
-            const contextInputPaymentAddressNode = document.querySelector('#payment-details-container input')?.value.trim();
-
-            if (!contextRequestedValueAmount || isNaN(contextRequestedValueAmount)) return window.showAlert("Please specify a valid numeric amount.");
-            if (window.userData.balance < window.appConfig.minWithdrawal) {
-                return window.showAlert(`Withdrawal denied: Minimum target limit is ₹${window.appConfig.minWithdrawal}.`);
-            }
-            if (window.userData.referrals < 2) {
-                return window.showAlert("Withdrawal locked: Minimum of 2 active successful referrals required.");
-            }
-            if (contextRequestedValueAmount > window.userData.balance) return window.showAlert("Insufficient account balance resource allocation.");
-            if (!contextInputPaymentAddressNode) return window.showAlert("Target payout path address info field parameter is missing.");
-
-            document.getElementById('app-loader').classList.remove('hidden');
-            try {
-                window.userData.balance -= contextRequestedValueAmount;
-                await updateDoc(doc(db, "users", window.userData.uid), { balance: window.userData.balance });
-                await addDoc(collection(db, "withdrawals"), {
-                    userId: window.userData.uid,
-                    userName: window.userData.name,
-                    amount: contextRequestedValueAmount,
-                    method: contextSelectedPayoutMethod,
-                    paymentDetail: contextInputPaymentAddressNode,
-                    status: "pending",
-                    requestedAt: serverTimestamp()
-                });
-                window.showAlert("Withdrawal request recorded dynamically.");
-                window.updateAllUI();
-                document.getElementById('withdraw-amount').value = "";
-            } catch (err) {
-                window.showAlert("Transaction error: " + err.message);
+                await updateDoc(doc(db, "users", targetedUid), { isBlocked: statusBooleanValue });
+                triggerNotificationToast(`Security configuration status updated for target vector user context.`);
+                closeUserDetailModal();
+            } catch(err) {
+                console.error(err);
+                triggerNotificationToast("Operation error writing restriction update.", true);
             } finally {
-                document.getElementById('app-loader').classList.add('hidden');
+                document.getElementById('loader').classList.add('hidden');
             }
         };
 
-        window.switchTab = function(targetViewId) {
-            document.querySelectorAll('.app-view').forEach(view => view.classList.remove('active'));
-            document.querySelectorAll('.nav-tab').forEach(tab => tab.classList.remove('active'));
-            const targetedViewElement = document.getElementById(`view-${targetViewId}`);
-            const targetedTabElement = document.getElementById(`tab-${targetViewId}`);
-            if (targetedViewElement && targetedTabElement) {
-                targetedViewElement.classList.add('active');
-                targetedTabElement.classList.add('active');
-            }
-            if (targetViewId === 'refer') {
-                const referUrl = `https://t.me/earnrewardtgbot/EarnReward?startapp=${window.userData.uid}`;
-                document.getElementById('referral-link-display').textContent = referUrl;
-                document.getElementById('referral-bonus-info').textContent = `Invite friends using your premium link to secure dynamic yield balances matching config parameters!`;
-            }
-            if (targetViewId === 'withdraw') {
-                const selectorChannelMethodElement = document.getElementById('withdraw-method');
-                const methodsArr = window.appConfig.paymentMethods || ["UPI", "Paytm"];
-                selectorChannelMethodElement.innerHTML = methodsArr.map(ch => `<option value="${ch}">${ch}</option>`).join('');
-                const interactiveContainerTargetInputBox = document.getElementById('payment-details-container');
-                const updateDynamicAddressPlaceholder = () => {
-                    const selVal = selectorChannelMethodElement.value.toLowerCase();
-                    let descText = "Enter destination address info";
-                    if (selVal.includes('upi')) descText = "Enter UPI target handle (e.g., walletID@paytm)";
-                    if (selVal.includes('paytm')) descText = "Enter 10-digit registered mobile number";
-                    interactiveContainerTargetInputBox.innerHTML = `<input type="text" placeholder="${descText}" class="w-full p-3 rounded-xl text-sm font-medium">`;
-                };
-                selectorChannelMethodElement.addEventListener('change', updateDynamicAddressPlaceholder);
-                updateDynamicAddressPlaceholder();
-                window.updateAllUI();
-            }
-        };
+        window.adjustUserBalance = async function(operationMode) {
+            const targetedUid = document.getElementById('usr-detail-uid').value;
+            const numericDeltaBox = document.getElementById('usr-balance-delta');
+            const parsedDeltaValue = parseInt(numericDeltaBox.value);
 
-        window.showAlert = function(msg) {
-            const box = document.getElementById('custom-alert');
-            document.getElementById('custom-alert-msg').textContent = msg;
-            box.classList.remove('hidden');
-            setTimeout(window.dismissAlert, 3000);
-        };
-        window.dismissAlert = function() { document.getElementById('custom-alert').classList.add('hidden'); };
-        
-        window.copyReferralCode = function() { 
-            const referUrl = `https://t.me/earnrewardtgbot/EarnReward?startapp=${window.userData.uid}`;
-            navigator.clipboard.writeText(referUrl); 
-            window.showAlert("Unique referral link copied successfully."); 
-        };
-        window.shareReferralCode = function() { 
-            const referUrl = `https://t.me/earnrewardtgbot/EarnReward?startapp=${window.userData.uid}`;
-            navigator.clipboard.writeText("Join GameRewarder to collect high yield balances instantly! Link: " + referUrl); 
-            window.showAlert("Invite deep link copied to clipboard completely."); 
-        };
-        
-        window.triggerFallbackAuth = function() {
-            window.onTelegramAuth({ id: 987654321, first_name: "Premium Sandbox Node", username: "premium_partner_test" });
-        };
+            if (operationMode !== 'reset' && (isNaN(parsedDeltaValue) || parsedDeltaValue <= 0)) {
+                alert("Please declare a verified positive integer balance unit parameters.");
+                return;
+            }
 
-        function initializeAppContainer() {
+            const activeUserDocRef = doc(db, "users", targetedUid);
+            document.getElementById('loader').classList.remove('hidden');
+
             try {
-                // Ensure Telegram WebApp context is active
-                if (window.Telegram && window.Telegram.WebApp) {
-                    const tgWebAppInstance = window.Telegram.WebApp;
-                    tgWebAppInstance.ready();
-                    tgWebAppInstance.expand();
+                const currentDocSnapshot = await getDoc(activeUserDocRef);
+                if(currentDocSnapshot.exists()) {
+                    let currentVaultBalance = parseInt(currentDocSnapshot.data().balance) || 0;
+                    let currentCumulativeEarnings = parseInt(currentDocSnapshot.data().totalEarned) || 0;
+                    let calculatedTargetBalance = currentVaultBalance;
 
-                    // Absolute safe checking of parameters to prevent infinite loops inside webview
-                    if (tgWebAppInstance.initDataUnsafe && tgWebAppInstance.initDataUnsafe.user && tgWebAppInstance.initDataUnsafe.user.id) {
-                        window.onTelegramAuth(tgWebAppInstance.initDataUnsafe.user);
-                        return;
+                    if(operationMode === 'add') {
+                        calculatedTargetBalance = currentVaultBalance + parsedDeltaValue;
+                        currentCumulativeEarnings += parsedDeltaValue;
+                    } else if(operationMode === 'deduct') {
+                        calculatedTargetBalance = Math.max(0, currentVaultBalance - parsedDeltaValue);
+                    } else if(operationMode === 'reset') {
+                        calculatedTargetBalance = 0;
+                    }
+
+                    await updateDoc(activeUserDocRef, { 
+                        balance: calculatedTargetBalance,
+                        totalEarned: currentCumulativeEarnings 
+                    });
+                    
+                    triggerNotificationToast("User ledger modifications written successfully.");
+                    closeUserDetailModal();
+                }
+            } catch(err) {
+                console.error(err);
+                triggerNotificationToast("Ledger block sync mutation write exception fault.", true);
+            } finally {
+                document.getElementById('loader').classList.add('hidden');
+            }
+        };
+
+        window.deleteUserFromLedger = async function() {
+            const targetedUid = document.getElementById('usr-detail-uid').value;
+            if(!targetedUid) return;
+
+            if(confirm("CRITICAL WARNING:\nAre you absolutely certain you intend to purge this user account asset document entry? All ledger units map paths will drop completely.")) {
+                document.getElementById('loader').classList.remove('hidden');
+                try {
+                    await deleteDoc(doc(db, "users", targetedUid));
+                    triggerNotificationToast("Target account vector purged successfully from Firestore.");
+                    closeUserDetailModal();
+                } catch(err) {
+                    triggerNotificationToast("Purge request exception fault generated.", true);
+                } finally {
+                    document.getElementById('loader').classList.add('hidden');
+                }
+            }
+        };
+
+        // --- RENDER COMPONENT: WITHDRAWALS REQUEST LEDGER MATRIX ---
+        function reRenderWithdrawalsTableContainer() {
+            const searchVal = document.getElementById('withdrawal-search-input').value.toLowerCase().trim();
+            const statusFilter = document.getElementById('withdrawal-filter-status').value;
+            const containerElement = document.getElementById('withdrawals-table-view');
+
+            let filteredList = activeMemoryCachedWithdrawals.filter(w => w.status === statusFilter);
+
+            if(searchVal) {
+                filteredList = filteredList.filter(w => 
+                    (w.userName && w.userName.toLowerCase().includes(searchVal)) ||
+                    (w.paymentDetail && w.paymentDetail.toLowerCase().includes(searchVal)) ||
+                    (w.userId && w.userId.toLowerCase().includes(searchVal))
+                );
+            }
+
+            if(filteredList.length === 0) {
+                containerElement.innerHTML = `<p class="text-xs text-slate-400 text-center py-8">No matching transaction components mapped to the selection criteria view.</p>`;
+                return;
+            }
+
+            let tableHTML = `
+                <table class="w-full text-xs text-left text-slate-300 table-fixed">
+                    <thead class="text-[10px] text-slate-400 uppercase bg-slate-900 border-b border-slate-800">
+                        <tr>
+                            <th class="px-4 py-3 w-3/12">Account Profile</th>
+                            <th class="px-4 py-3 w-2/12">Requested Units</th>
+                            <th class="px-4 py-3 w-2/12">Protocol Node</th>
+                            <th class="px-4 py-3 w-3/12">Destination Coordinates</th>
+                            <th class="px-4 py-3 w-2/12 text-center">Actions Branch</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-800 bg-[#1e293b]">
+            `;
+
+            filteredList.forEach(log => {
+                let interactiveActionsBlock = ``;
+                if(log.status === 'pending') {
+                    interactiveActionsBlock = `
+                        <div class="flex gap-1 justify-center">
+                            <button onclick="mutateWithdrawalState('${log.id}', 'approved', '${log.userId}', ${log.amount})" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold p-1 px-2 rounded text-[10px] transition">Approve</button>
+                            <button onclick="mutateWithdrawalState('${log.id}', 'rejected', '${log.userId}', ${log.amount})" class="bg-red-600 hover:bg-red-500 text-white font-bold p-1 px-2 rounded text-[10px] transition">Reject</button>
+                        </div>
+                    `;
+                } else {
+                    interactiveActionsBlock = `<span class="block text-center uppercase tracking-widest font-bold text-[10px] text-slate-500">${log.status}</span>`;
+                }
+
+                tableHTML += `
+                    <tr class="hover:bg-slate-800/20 transition">
+                        <td class="px-4 py-3 font-semibold text-white truncate">${log.userName || 'Unspecified Name'}<span class="block font-mono text-[9px] text-slate-500">${log.userId}</span></td>
+                        <td class="px-4 py-3 font-bold text-orange-400">₹${log.amount}</td>
+                        <td class="px-4 py-3"><span class="bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 px-2 py-0.5 rounded text-[10px] font-bold">${log.method}</span></td>
+                        <td class="px-4 py-3 font-mono text-slate-300 truncate select-all">${log.paymentDetail || 'N/A'}</td>
+                        <td class="px-4 py-3">${interactiveActionsBlock}</td>
+                    </tr>
+                `;
+            });
+
+            tableHTML += `</tbody></table>`;
+            containerElement.innerHTML = tableHTML;
+        }
+
+        window.mutateWithdrawalState = async function(docId, targetActionString, userId, originalAmount) {
+            if(!docId || !targetActionString) return;
+
+            document.getElementById('loader').classList.remove('hidden');
+            try {
+                const batchInstance = writeBatch(db);
+                const withdrawalDocRef = doc(db, "withdrawals", docId);
+                
+                batchInstance.update(withdrawalDocRef, { status: targetActionString });
+
+                if(targetActionString === 'rejected' && userId && originalAmount) {
+                    const userProfileDocRef = doc(db, "users", userId);
+                    const currentSnap = await getDoc(userProfileDocRef);
+                    if(currentSnap.exists()) {
+                        let currentVaultVal = parseInt(currentSnap.data().balance) || 0;
+                        batchInstance.update(userProfileDocRef, { balance: currentVaultVal + parseInt(originalAmount) });
                     }
                 }
-                
-                // Fallback state indicators if loaded outside TG (e.g. Chrome browser)
-                document.getElementById('app-loader').classList.add('hidden');
-                document.getElementById('btn-browser-bypass').classList.remove('hidden');
-                
-            } catch (err) {
-                console.error("Initialization error execution context:", err);
-                document.getElementById('app-loader').classList.add('hidden');
-                document.getElementById('btn-browser-bypass').classList.remove('hidden');
+
+                await batchInstance.commit();
+                triggerNotificationToast(`Withdrawal pipeline action processed to state: ${targetActionString}`);
+            } catch(err) {
+                console.error(err);
+                triggerNotificationToast("Transaction commitment error executing pipeline mutate.", true);
+            } finally {
+                document.getElementById('loader').classList.add('hidden');
             }
+        };
+
+        // --- TASK CORE DEPLOYMENT LOGIC MANAGER FUNCTIONS ---
+        window.openAddTaskModal = function() {
+            document.getElementById('task-editing-id').value = "";
+            document.getElementById('task-channel-name').value = "";
+            document.getElementById('task-channel-url').value = "";
+            document.getElementById('task-reward-amount').value = "";
+            document.getElementById('task-active-state').checked = true;
+            document.getElementById('task-modal-title').textContent = "Provision Task Node Asset";
+            document.getElementById('task-modal').classList.remove('hidden');
+        };
+
+        window.openEditTaskModal = function(id, name, url, reward, activeState) {
+            document.getElementById('task-editing-id').value = id;
+            document.getElementById('task-channel-name').value = unescape(name);
+            document.getElementById('task-channel-url').value = url;
+            document.getElementById('task-reward-amount').value = reward;
+            document.getElementById('task-active-state').checked = Boolean(activeState);
+            document.getElementById('task-modal-title').textContent = "Mutate Task Configuration Document";
+            document.getElementById('task-modal').classList.remove('hidden');
+            lucide.createIcons();
+        };
+
+        window.closeTaskModal = function() {
+            document.getElementById('task-modal').classList.add('hidden');
+        };
+
+        window.saveTaskConfiguration = async function() {
+            const currentId = document.getElementById('task-editing-id').value;
+            const channelName = document.getElementById('task-channel-name').value.trim();
+            const channelUrl = document.getElementById('task-channel-url').value.trim();
+            const rewardAmount = parseInt(document.getElementById('task-reward-amount').value);
+            const isActive = document.getElementById('task-active-state').checked;
+
+            if(!channelName || !channelUrl || isNaN(rewardAmount)) {
+                alert("Please complete parameter inputs layout requirements.");
+                return;
+            }
+
+            document.getElementById('loader').classList.remove('hidden');
+            try {
+                const targetRef = currentId ? doc(db, "tasks", currentId) : doc(collection(db, "tasks"));
+                await setDoc(targetRef, {
+                    channelName,
+                    channelUrl,
+                    rewardAmount,
+                    isActive
+                }, { merge: true });
+
+                triggerNotificationToast("Task blueprint successfully written into Firebase collections index tree.");
+                closeTaskModal();
+            } catch(err) {
+                triggerNotificationToast("Task write execution structural exception.", true);
+            } finally {
+                document.getElementById('loader').classList.add('hidden');
+            }
+        };
+
+        window.deleteTaskNodeAsset = async function(id) {
+            if(confirm("Confirm asset removal: Drop this verification channel entity context from active nodes?")) {
+                document.getElementById('loader').classList.remove('hidden');
+                try {
+                    await deleteDoc(doc(db, "tasks", id));
+                    triggerNotificationToast("Task asset vector dropped completely.");
+                } catch(err) {
+                    triggerNotificationToast("Error executing item deletion map context.", true);
+                } finally {
+                    document.getElementById('loader').classList.add('hidden');
+                }
+            }
+        };
+
+        // --- BROADCAST INTER-APP NOTIFICATION PUSH ---
+        window.submitSystemBroadcast = async function() {
+            const announcementText = document.getElementById('broadcast-announcement-text').value.trim();
+            const popupText = document.getElementById('broadcast-popup-text').value.trim();
+
+            document.getElementById('loader').classList.remove('hidden');
+            try {
+                await setDoc(doc(db, "config", "main"), {
+                    announcement: announcementText,
+                    popupNotificationMessage: popupText
+                }, { merge: true });
+                triggerNotificationToast("Global configuration message layers updated dynamically.");
+            } catch(err) {
+                triggerNotificationToast("Broadcast write sequence structural exception.", true);
+            } finally {
+                document.getElementById('loader').classList.add('hidden');
+            }
+        };
+
+        // --- APP MATRIX SETTINGS FORM MANAGEMENT COMPONENTS ---
+        async function populateActiveSettingsForm() {
+            document.getElementById('loader').classList.remove('hidden');
+            try {
+                const configSnapshot = await getDoc(doc(db, "config", "main"));
+                if(configSnapshot.exists()) {
+                    const data = configSnapshot.data();
+                    
+                    document.getElementById('setting-adWatchReward').value = data.adWatchReward || 0;
+                    document.getElementById('setting-referralBonus').value = data.referralBonus || 0;
+                    document.getElementById('setting-signupBonus').value = data.signupBonus || 0;
+                    document.getElementById('setting-minWithdrawal').value = data.minWithdrawal || 0;
+                    document.getElementById('setting-referralRequirement').value = data.referralRequirement || 0;
+                    document.getElementById('setting-dailyAdLimit').value = data.dailyAdLimit || 0;
+
+                    document.getElementById('setting-maintenanceMode').checked = Boolean(data.maintenanceMode);
+                    document.getElementById('setting-enableWithdraw').checked = Boolean(data.enableWithdraw);
+                    document.getElementById('setting-enableAds').checked = Boolean(data.enableAds);
+
+                    document.getElementById('setting-adsgramBlockId').value = data.adsgramBlockId || "";
+                    document.getElementById('setting-enableAdsgram').checked = Boolean(data.enableAdsgram);
+                    document.getElementById('setting-adsgramTestMode').checked = Boolean(data.adsgramTestMode);
+
+                    if (data.announcement) document.getElementById('broadcast-announcement-text').value = data.announcement;
+                    if (data.popupNotificationMessage) document.getElementById('broadcast-popup-text').value = data.popupNotificationMessage;
+                }
+            } catch(err) {
+                console.error(err);
+            } finally {
+                document.getElementById('loader').classList.add('hidden');
+            }
+        }
+
+        window.commitMasterMatrixSettings = async function() {
+            const targetPayloadBlueprint = {
+                adWatchReward: parseInt(document.getElementById('setting-adWatchReward').value) || 0,
+                referralBonus: parseInt(document.getElementById('setting-referralBonus').value) || 0,
+                signupBonus: parseInt(document.getElementById('setting-signupBonus').value) || 0,
+                minWithdrawal: parseInt(document.getElementById('setting-minWithdrawal').value) || 0,
+                referralRequirement: parseInt(document.getElementById('setting-referralRequirement').value) || 0,
+                dailyAdLimit: parseInt(document.getElementById('setting-dailyAdLimit').value) || 0,
+                
+                maintenanceMode: document.getElementById('setting-maintenanceMode').checked,
+                enableWithdraw: document.getElementById('setting-enableWithdraw').checked,
+                enableAds: document.getElementById('setting-enableAds').checked,
+                
+                adsgramBlockId: document.getElementById('setting-adsgramBlockId').value.trim(),
+                enableAdsgram: document.getElementById('setting-enableAdsgram').checked,
+                adsgramTestMode: document.getElementById('setting-adsgramTestMode').checked
+            };
+
+            document.getElementById('loader').classList.remove('hidden');
+            try {
+                await setDoc(doc(db, "config", "main"), targetPayloadBlueprint, { merge: true });
+                triggerNotificationToast("Ecosystem core metrics pushed globally inside config tree data.");
+            } catch(err) {
+                triggerNotificationToast("Error rewriting application core matrix values.", true);
+            } finally {
+                document.getElementById('loader').classList.add('hidden');
+            }
+        };
+
+        // --- UTILITY COMPONENT: TOAST NOTIFICATIONS DESCRIPTOR ---
+        function triggerNotificationToast(messageText, isErrorFlag = false) {
+            const toast = document.getElementById('toast-notification');
+            const toastMsg = document.getElementById('toast-message');
+            if(!toast || !toastMsg) return;
+
+            toastMsg.textContent = messageText;
+            toast.className = `fixed bottom-6 right-6 z-50 text-white px-5 py-3 rounded-xl shadow-2xl flex items-center gap-2 ${isErrorFlag ? 'bg-red-600' : 'bg-orange-600'}`;
+            
+            toast.classList.remove('hidden');
+            setTimeout(() => {
+                toast.classList.add('hidden');
+            }, 4000);
         }
     </script>
 </body>
